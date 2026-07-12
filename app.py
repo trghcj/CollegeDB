@@ -30,10 +30,14 @@ async def run_scraper():
     
     await log_queue.put("Starting scraper pipeline...")
     
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    
     process = await asyncio.create_subprocess_exec(
         "python", "build_dataset.py",
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT
+        stderr=asyncio.subprocess.STDOUT,
+        env=env
     )
 
     while True:
