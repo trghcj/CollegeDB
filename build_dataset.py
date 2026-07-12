@@ -20,6 +20,7 @@ from scraper.website_search import search_official_website, search_github_logo, 
 from scraper.logo_downloader import download_logo
 from scraper.image_validator import is_valid_logo
 from scraper.unilogo_search import search_unilogo
+from scraper.data_extractor import extract_college_details
 
 os.makedirs('logs', exist_ok=True)
 logging.basicConfig(
@@ -98,8 +99,23 @@ def process_college(college_data: dict) -> dict:
         # TIER 1: Wikipedia Pipeline
         # ---------------------------------------------------------
         wiki_title, wiki_id = search_wikipedia(search_name)
-        result['Wikipedia Page'] = wiki_title
-        result['Wikidata ID'] = wiki_id
+        
+        # --- DATA EXTRACTION ---
+        if wiki_title and (result['City'] == 'Unknown' or result['State'] == 'Unknown' or not result['Rank']):
+            logger.info(f"[{original_name}] Missing data detected, extracting from Wikipedia infobox...")
+            ext_data = extract_college_details(wiki_title)
+            if result['City'] == 'Unknown' and ext_data['City'] != 'Unknown':
+                result['City'] = ext_data['City']
+            if result['State'] == 'Unknown' and ext_data['State'] != 'Unknown':
+                result['State'] = ext_data['State']
+            if not result['Rank'] and ext_data['Rank']:
+                result['Rank'] = ext_data['Rank']
+        # -----------------------
+
+        if wiki_title:
+            result['Wikipedia Page'] = wiki_title
+        if wiki_id:
+            result['Wikidata ID'] = wiki_id
         
         filename = ""
         source = ""

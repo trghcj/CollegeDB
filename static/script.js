@@ -53,14 +53,25 @@ function handleFiles(files) {
     }
 }
 
+// Create cursor element once
+const cursorSpan = document.createElement('span');
+cursorSpan.className = 'inline-block w-2 h-4 ml-1 bg-violet-400 animate-pulse';
+terminalContent.appendChild(cursorSpan);
+
 function appendToTerminal(text) {
     const isScrolledToBottom = terminal.scrollHeight - terminal.clientHeight <= terminal.scrollTop + 10;
     
-    // Check if the text contains a carriage return \r (used by tqdm)
+    // Remove cursor temporarily
+    if (terminalContent.contains(cursorSpan)) {
+        terminalContent.removeChild(cursorSpan);
+    }
+
+    let shouldReplaceLastLine = false;
     if (text.includes('\r')) {
-        // Simple handling: just append it, or we could replace the last line.
-        // For simplicity in a web UI, we'll just append it normally or strip \r.
-        text = text.replace(/\r/g, '');
+        shouldReplaceLastLine = true;
+        // Get only the content after the last \r
+        const parts = text.split('\r');
+        text = parts[parts.length - 1];
     }
 
     const line = document.createElement('div');
@@ -70,9 +81,18 @@ function appendToTerminal(text) {
     else if (text.includes('WARNING')) line.classList.add('text-amber-400');
     else if (text.includes('ERROR')) line.classList.add('text-rose-400');
     else if (text.includes('Success')) line.classList.add('text-emerald-400');
+    else if (text.includes('%|')) line.classList.add('text-violet-300', 'font-bold'); // tqdm line
     
     line.textContent = text;
-    terminalContent.appendChild(line);
+    
+    if (shouldReplaceLastLine && terminalContent.lastElementChild) {
+        terminalContent.replaceChild(line, terminalContent.lastElementChild);
+    } else {
+        terminalContent.appendChild(line);
+    }
+    
+    // Re-add cursor
+    terminalContent.appendChild(cursorSpan);
 
     if (isScrolledToBottom) {
         terminal.scrollTop = terminal.scrollHeight;
