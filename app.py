@@ -40,13 +40,24 @@ async def run_scraper():
         env=env
     )
 
+    buffer = bytearray()
     while True:
-        line = await process.stdout.readline()
-        if not line:
+        char = await process.stdout.read(1)
+        if not char:
+            if buffer:
+                text = buffer.decode('utf-8', errors='replace').strip()
+                if text:
+                    await log_queue.put(text)
             break
-        text = line.decode('utf-8', errors='replace').strip()
-        if text:
-            await log_queue.put(text)
+            
+        buffer.extend(char)
+        if char == b'\n' or char == b'\r':
+            text = buffer.decode('utf-8', errors='replace').strip()
+            buffer.clear()
+            if text:
+                if char == b'\r':
+                    text = '\r' + text
+                await log_queue.put(text)
             
     await process.wait()
     await log_queue.put(f"Process exited with code {process.returncode}")
