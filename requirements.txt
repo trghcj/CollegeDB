@@ -9,3 +9,6 @@ wikipedia-api
 wikidata
 Pillow
 ddgs
+fastapi
+uvicorn
+python-multipart
