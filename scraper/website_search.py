@@ -1,8 +1,8 @@
 import time
 import logging
 import urllib.parse
-from duckduckgo_search import DDGS
-from duckduckgo_search.exceptions import RatelimitException
+from ddgs import DDGS
+from ddgs.exceptions import RatelimitException
 
 logger = logging.getLogger(__name__)
 
