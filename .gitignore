@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+logs/
+logos/
+colleges.csv
+engineering_colleges.csv
+failed.csv
+Dataset_Results.zip
