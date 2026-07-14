@@ -146,6 +146,12 @@ def process_college(college_data: dict) -> dict:
         if website:
             domain = extract_domain(website)
             
+            # TIER 3 (New): Logo.dev API (High Precision)
+            logodev_url = f"https://img.logo.dev/{domain}?token=pk_GV_DOJPrRyWvK5B_7eyIGQ&format=png&fallback=404"
+            local_path = download_logo(logodev_url, original_name)
+            if validate_and_return(local_path, result, "Tier 3: Logo.dev API", logodev_url, "Very High", original_name):
+                return result
+                
             # (Favicon API demoted to Tier 8)
             
             html_content, soup = fetch_homepage(website)

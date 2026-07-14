@@ -11,15 +11,31 @@ HEADERS = {
 }
 
 def fetch_homepage(url: str) -> tuple[str, BeautifulSoup]:
-    """Fetches and parses the homepage HTML once."""
+    """Fetches and parses the homepage HTML once, with Playwright fallback."""
     if not url.startswith('http'):
         url = 'https://' + url
     try:
         resp = requests.get(url, headers=HEADERS, timeout=10, verify=False)
         if resp.status_code == 200:
             return resp.text, BeautifulSoup(resp.text, 'lxml')
+        else:
+            logger.warning(f"Requests got status {resp.status_code} for {url}. Falling back to Playwright.")
     except Exception as e:
-        logger.error(f"[HTML Extractor] Failed to fetch {url}: {e}")
+        logger.warning(f"Requests failed to fetch {url}: {e}. Falling back to Playwright.")
+        
+    # Playwright Fallback
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(url, timeout=15000, wait_until='domcontentloaded')
+            html = page.content()
+            browser.close()
+            return html, BeautifulSoup(html, 'lxml')
+    except Exception as pe:
+        logger.error(f"[HTML Extractor] Playwright also failed for {url}: {pe}")
+        
     return "", None
 
 def get_favicon(soup: BeautifulSoup, base_url: str) -> str:

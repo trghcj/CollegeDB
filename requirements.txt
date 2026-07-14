@@ -12,3 +12,7 @@ ddgs
 fastapi
 uvicorn
 python-multipart
+
+rembg
+onnxruntime
+playwright

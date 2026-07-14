@@ -8,8 +8,8 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_FORMATS = ['.png']
-REJECTED_FORMATS = ['.ico', '.gif', '.bmp', '.tiff', '.tif', '.svg', '.jpg', '.jpeg', '.webp']
+SUPPORTED_FORMATS = ['.png', '.jpg', '.jpeg', '.webp']
+REJECTED_FORMATS = ['.ico', '.gif', '.bmp', '.tiff', '.tif', '.svg']
 
 # Cryptographic hashes of known generic placeholder images (Wikipedia placeholders, DDG defaults, etc.)
 BAD_HASHES = [
@@ -95,9 +95,21 @@ def download_logo(logo_url: str, college_name: str, save_dir: str = 'logos') -> 
                 img.save(save_path, 'PNG')
                 return save_path
                 
-            # If JPG or PNG, save original bytes
-            if img.format == 'JPEG':
-                ext = '.jpg'
+            # If JPG, use rembg to remove background and convert to PNG
+            if img.format in ['JPEG', 'JPG']:
+                from rembg import remove
+                try:
+                    img_bytes = remove(response.content)
+                    img = Image.open(BytesIO(img_bytes)).convert('RGBA')
+                    ext = '.png'
+                    save_path = os.path.join(save_dir, f"{base_name}{ext}")
+                    img.save(save_path, 'PNG')
+                    logger.info(f"Successfully removed background from JPG for {logo_url}")
+                    return save_path
+                except Exception as e:
+                    logger.warning(f"rembg failed on {logo_url}: {e}")
+                    return ""
+                    
             elif img.format == 'PNG':
                 ext = '.png'
                 
